@@ -16,7 +16,7 @@ namespace WIFI{
         xSemaphoreTake(MUTEX::MUTEXwifi, portMAX_DELAY);
         //esp_err_t results = esp_wifi_init(WIFI_INIT_CONFIG_DEFAULT);
         WiFi.mode(WIFI_STA);
-        WiFi.begin("*******", "********"); // Replace with your WiFi credentials
+        WiFi.begin("*****", "*****"); // Replace with your WiFi credentials
         esp_err_t results = esp_wifi_start();
 
         Serial.println("WiFi start result: " + String(results));

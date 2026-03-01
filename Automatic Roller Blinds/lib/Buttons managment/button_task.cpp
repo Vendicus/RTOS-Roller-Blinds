@@ -18,7 +18,7 @@ namespace BUTTON_TASK
             if (xQueueReceive(QUEUE::ButtonQueue, &receivedButtonID, portMAX_DELAY) == pdTRUE)
             {
                 // debouncing
-                vTaskDelay(pdMS_TO_TICKS(40));
+                vTaskDelay(pdMS_TO_TICKS(60));
 
                 // reading the button state after debounce delay
                 switch (receivedButtonID)

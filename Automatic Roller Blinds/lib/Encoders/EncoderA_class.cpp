@@ -21,7 +21,7 @@ void EncoderA::init()
     min_count = -10;
 
     // read last values from flash
-    encoder_count = flash.getInt("count", 0);
+    encoder_count = flash.getInt("count_A", 0);
     max_count = flash.getInt("max", 200);
     Serial.printf("MAX value read: %d\n", max_count);
     Serial.printf("ENCODER A val read :%d\n", encoder_count);
@@ -52,9 +52,9 @@ int64_t EncoderA::get_count()
 void EncoderA::reset_count()
 {
     encoder_count = 0;
-    if (ENCODER::EncoderA::get_count() != flash.getInt("count",false))
+    if (ENCODER::EncoderA::get_count() != flash.getInt("count_A",false))
     {
-        flash.putInt("count", ENCODER::EncoderA::get_count()); // save encoder count to flash
+        flash.putInt("count_A", ENCODER::EncoderA::get_count()); // save encoder count to flash
     }
 }
 

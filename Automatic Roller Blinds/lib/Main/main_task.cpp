@@ -21,6 +21,7 @@ namespace MAIN_TASK
     uint8_t serial_latch {0};
     uint8_t counter {0};
     uint8_t counter_enc {0};
+    uint8_t prev_mode {0};
 
     void main_task(void* parameter)
     {
@@ -37,7 +38,11 @@ namespace MAIN_TASK
                 switch(ManualModeValue)
                 {
                 case 1: // UP button
-                    GLOBALS::manual_switch++; 
+                    if (prev_mode == 0)
+                    {
+                        GLOBALS::manual_switch++; 
+                        prev_mode = 1;
+                    }
                     digitalWrite(PIN::Relay_pin, HIGH); // turn on relay
                     
                     if (GLOBALS::manual_switch == 2) // right motor works only
@@ -58,7 +63,6 @@ namespace MAIN_TASK
                     }
                     else // both motors work
                     {
-                        GLOBALS::manual_switch = 0;
                         xSemaphoreTake(MUTEX::MUTEXmode, portMAX_DELAY);
                         GLOBALS::MODE = 1; // Switch to manual mode for both motors
                         xSemaphoreGive(MUTEX::MUTEXmode);
@@ -73,7 +77,12 @@ namespace MAIN_TASK
                     break;
                 
                 case 2: // DOWN button
-                    GLOBALS::manual_switch++;
+                    if (prev_mode == 0)
+                    {    
+                        GLOBALS::manual_switch++;
+                        prev_mode = 2;
+                    }
+                   
                     digitalWrite(PIN::Relay_pin, HIGH); // turn on relay
 
                     if (GLOBALS::manual_switch == 2) // right motor works only
@@ -94,17 +103,12 @@ namespace MAIN_TASK
                     }
                     else // both motors work
                     {
-                        GLOBALS::manual_switch = 0;
                         xSemaphoreTake(MUTEX::MUTEXmode, portMAX_DELAY);
                         GLOBALS::MODE = 1; // Switch to manual mode for both motors
                         xSemaphoreGive(MUTEX::MUTEXmode);
                         local_mode = 1;
                     }
                     
-                    xSemaphoreTake(MUTEX::MUTEXmode, portMAX_DELAY);
-                    GLOBALS::MODE = 1; // Switch to manual mode     
-                    xSemaphoreGive(MUTEX::MUTEXmode);
-                    local_mode = 1;
                     Serial.println("DOWN button pressed - MODE 1 active");
                     vTaskResume(MOTOR::MotorA::task_motorA_controller_handle);
                     vTaskResume(MOTOR::MotorB::task_motorB_controller_handle);
@@ -220,6 +224,7 @@ namespace MAIN_TASK
                     GLOBALS::MODE = 0; // Switch to idle mode
                     xSemaphoreGive(MUTEX::MUTEXmode);
                     local_mode = 0;
+                    prev_mode = 0;
                     SOFTWARE_TIMERS::AfterManualMode_timer_active = true;
                     xTimerStart(SOFTWARE_TIMERS::AfterManualMode_timer, 0); // start timer to delay next possible automatic mode change after manual operation, 5 seconds 
                     xTimerStart(SOFTWARE_TIMERS::Manual_solo_motor_switch_timer, 0); // start timer to reset manual switch to both motors mode if it was in solo mode, 2 seconds
@@ -296,14 +301,14 @@ namespace MAIN_TASK
              
             // --------------------------------------------------> SERIAL OUTPUT FOR DEBUGGING <-----------------------------------------------
             // Encoder limits reached messages and values printing, latched to avoid flooding the serial monitor with messages when motors are stopped at limits, will reset when both encoders are away from limits again
-            if ((ENCODER::EncoderA::at_up_limit() || ENCODER::EncoderB::at_up_limit()) && serial_latch == 0)
+            if ((ENCODER::EncoderA::at_up_limit() || ENCODER::EncoderB::at_up_limit()) && serial_latch == 0 ) 
             {
                 Serial.println("MAX reached");
                 Serial.printf("Encoder A count: %d\n", ENCODER::EncoderA::get_count());
                 Serial.printf("Encoder B count: %d\n", ENCODER::EncoderB::get_count());
                 serial_latch = 1;                   
             }
-            else if ((ENCODER::EncoderA::at_down_limit() || ENCODER::EncoderB::at_down_limit()) && serial_latch == 0)
+            else if ((ENCODER::EncoderA::at_down_limit() || ENCODER::EncoderB::at_down_limit()) && serial_latch == 0) 
             {
                 Serial.println("MIN REACHED!");
                 Serial.printf("Encoder A count: %d\n", ENCODER::EncoderA::get_count());

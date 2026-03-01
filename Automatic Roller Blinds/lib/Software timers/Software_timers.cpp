@@ -179,7 +179,8 @@ namespace SOFTWARE_TIMERS
     {
         if (GLOBALS::MODE == 0)
         {
-            GLOBALS::manual_switch = 0; // switch back to normal mode with both motors working
+            GLOBALS::manual_switch = 0; // switch back to normal mode with both motors 
+            digitalWrite(PIN::LED_PIN, LOW);
             Serial.println("Changing switch counter to 0!");
         }           
     }

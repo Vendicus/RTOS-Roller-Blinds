@@ -11,6 +11,7 @@ namespace MAIN_TASK
     extern uint8_t serial_latch;
     extern uint8_t counter;
     extern uint8_t counter_enc;
+    extern uint8_t prev_mode;
 
     void main_task(void* parameter);
     void main_task_init(unsigned portBASE_TYPE stack_size = 2048, UBaseType_t priority = 1);
