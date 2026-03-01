@@ -8,13 +8,13 @@ namespace ENCODER {
 class EncoderA
 {
   public:
-    static void init(uint8_t encoderA_canal_a);
+    static void init();
 
-    static void set_up_limit(int32_t initial_count);
+    static void set_up_limit(int64_t initial_count);
 
-    static void set_down_limit(int32_t initial_count);
+    static void set_down_limit(int64_t initial_count);
 
-    static int32_t get_count();
+    static int64_t get_count();
 
     static void reset_count();
 
@@ -22,9 +22,9 @@ class EncoderA
 
     static bool at_down_limit();
 
-    static int32_t get_up_limit();
+    static int64_t get_up_limit();
 
-    static int32_t get_down_limit();
+    static int64_t get_down_limit();
 
     //TASKS
     static TaskHandle_t task_encoderA_handle;
@@ -32,9 +32,8 @@ class EncoderA
 
   private:
     //encoder count variable
-    static int32_t max_count, min_count, encoder_count;
+    static int64_t max_count, min_count, encoder_count;
 
     static uint32_t can_id;
-    static uint8_t canal_a, canal_b;
 };
 }

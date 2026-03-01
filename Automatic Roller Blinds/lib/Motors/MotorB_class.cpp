@@ -123,7 +123,7 @@ void MotorB::task_motor_controller(void* parameter)
     while (1)
     {
         xSemaphoreTake(MUTEX::MUTEXmode, portMAX_DELAY);
-        (local_mode != GLOBALS::MODE && local_mode != 3) ? local_mode = GLOBALS::MODE : local_mode;       
+        (local_mode != GLOBALS::MODE && local_mode != 3 && GLOBALS::MODE != 15) ? local_mode = GLOBALS::MODE : local_mode;       
         xSemaphoreGive(MUTEX::MUTEXmode);
         switch(local_mode)
         {
@@ -146,6 +146,17 @@ void MotorB::task_motor_controller(void* parameter)
                 MotorB::start(true, true, 255, 50, 5);
             }
             break;
+        case 7: // manual mode with left motor only
+            xTaskNotifyWait(0, 0, &buttonID, 0);
+            if (buttonID == 1) // UP button
+            {
+                MotorB::start(true, false, 255, 50, 5);
+            }
+            else if (buttonID == 2) // DOWN button
+            {
+                MotorB::start(true, true, 255, 50, 5);
+            }
+             break;
         
         // *********** emergency stop mode *************
         case 3:
@@ -164,8 +175,7 @@ void MotorB::task_motor_controller(void* parameter)
             break;
         
         default:
-            MotorB::stop(false);
-            vTaskSuspend(NULL);
+            MotorB::stop(true);
             break;
         }
 

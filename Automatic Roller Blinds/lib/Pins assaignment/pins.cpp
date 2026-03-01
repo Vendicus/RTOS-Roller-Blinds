@@ -10,7 +10,7 @@ namespace PIN{
     const uint8_t Button_down {5};      // GPIO pin for DOWN button
     const uint8_t Button_Em_stop {4};   // GPIO pin for EMERGENCY STOP button
 
-    const uint8_t Relay_pin {12};       //GPIO pin for relay control
+    const uint8_t Relay_pin {12};       // GPIO pin for relay control
 
     // Motor A pins
     const uint8_t MotorA_enable {14};   // GPIO pin for Motor A ENABLE
@@ -23,10 +23,10 @@ namespace PIN{
     const uint8_t MotorB_in2 {32};      // GPIO pin for Motor B IN2
 
     // Encoders pins
-    const uint8_t EncoderA_canalA {18};     // GPIO pin for Encoder A canal A
-    const uint8_t EncoderB_canalA {19};     // GPIO pin for Encoder B canal A 
-    //const uint8_t EncoderA_canalB {22};   // GPIO pin for Encoder A canal B
-    //const uint8_t EncoderB_canalB {23};     // GPIO pin for Encoder B canal B
+    const uint8_t EncoderA_canalA {18};    // GPIO pin for Encoder A canal A
+    const uint8_t EncoderB_canalA {19};    // GPIO pin for Encoder B canal A 
+    const uint8_t EncoderA_canalB {21};    // GPIO pin for Encoder A canal B
+    const uint8_t EncoderB_canalB {23};    // GPIO pin for Encoder B canal B
 
     // Backup pin
     const uint8_t Voltage_monitor_pin{22};   // GPIO pin used as signal for power lose 
@@ -55,9 +55,9 @@ namespace PIN{
 
         // Initialize Encoders pins
         pinMode(EncoderA_canalA, INPUT_PULLUP);
-        //pinMode(EncoderA_canalB, INPUT_PULLUP);
+        pinMode(EncoderA_canalB, INPUT_PULLUP);
         pinMode(EncoderB_canalA, INPUT_PULLUP);
-        //pinMode(EncoderB_canalB, INPUT_PULLUP);
+        pinMode(EncoderB_canalB, INPUT_PULLUP);
 
         // Initialize Backup monitor pin
         pinMode(Voltage_monitor_pin, INPUT_PULLUP); //use resistor to 3.3V (10 KOhm)

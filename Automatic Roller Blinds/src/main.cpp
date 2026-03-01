@@ -59,8 +59,8 @@ void setup()
   BACKUP_TASK::backup_task_init(4096, 4);
   MOTOR::MotorA::init(PIN::MotorA_enable, PIN::MotorA_in1, PIN::MotorA_in2);
   MOTOR::MotorB::init(PIN::MotorB_enable, PIN::MotorB_in1, PIN::MotorB_in2);
-  ENCODER::EncoderA::init(PIN::EncoderA_canalA);
-  ENCODER::EncoderB::init(PIN::EncoderB_canalA);
+  ENCODER::EncoderA::init();
+  ENCODER::EncoderB::init();
   SSR::SSR::SSR_task_init(8192, 2);
   MAIN_TASK::main_task_init();
   WIFI::ota_task_init();

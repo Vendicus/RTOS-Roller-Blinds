@@ -1,19 +1,18 @@
 #include <EncoderB_class.h>
 #include <Arduino.h>
 #include <Preferences.h>
+#include <pins.h>
 
 namespace ENCODER {
 
-int32_t EncoderB::max_count {0};
-int32_t EncoderB::min_count {0};
-int32_t EncoderB::encoder_count {0};
+int64_t EncoderB::max_count {0};
+int64_t EncoderB::min_count {0};
+int64_t EncoderB::encoder_count {0};
 uint32_t EncoderB::can_id {0};
-uint8_t EncoderB::canal_a {0};
-uint8_t EncoderB::canal_b {0};
 
 TaskHandle_t EncoderB::task_encoderB_handle = NULL;
 
-void EncoderB::init(uint8_t encoderB_canal_a)
+void EncoderB::init()
 {
     encoder_count = 0;
     max_count = 200;
@@ -24,9 +23,6 @@ void EncoderB::init(uint8_t encoderB_canal_a)
     max_count = flash.getInt("maxB", 200);
     Serial.printf("MAX value read: %d\n", max_count);
     Serial.printf("ENCODER B val read :%d\n", encoder_count);
-
-    canal_a = encoderB_canal_a;
-    //canal_b = encoderB_canal_b;
 
     xTaskCreate(
         EncoderB::task_encoderB_reader,                 // Task function
@@ -41,7 +37,7 @@ void EncoderB::init(uint8_t encoderB_canal_a)
 /**
  * @return current encoder count.
  */
-int32_t EncoderB::get_count()
+int64_t EncoderB::get_count()
 {
     return encoder_count;
 }
@@ -62,7 +58,7 @@ void EncoderB::reset_count()
  * @brief Set the upper limit for the encoder count and save to flash new value.
  * @param initial_count the upper limit value to set.
  */
-void EncoderB::set_up_limit(int32_t initial_count)
+void EncoderB::set_up_limit(int64_t initial_count)
 {
     max_count = initial_count;
     // save in FLASH after val change
@@ -75,7 +71,7 @@ void EncoderB::set_up_limit(int32_t initial_count)
 /**
  * @return upper limit value of encoder.
  */
-int32_t EncoderB::get_up_limit()
+int64_t EncoderB::get_up_limit()
 {
     return max_count;
 }
@@ -83,7 +79,7 @@ int32_t EncoderB::get_up_limit()
 /**
  * @return lower limit value of encoder.
  */
-int32_t EncoderB::get_down_limit()
+int64_t EncoderB::get_down_limit()
 {
     return min_count;
 }
@@ -92,7 +88,7 @@ int32_t EncoderB::get_down_limit()
  * @brief Set the lower limit for the encoder count.
  * @param initial_count the lower limit value to set.
  */
-void EncoderB::set_down_limit(int32_t initial_count)
+void EncoderB::set_down_limit(int64_t initial_count)
 {
     min_count = initial_count;
 }
@@ -121,7 +117,7 @@ void EncoderB::task_encoderB_reader(void* parameter)
     while (1)
     {
         xTaskNotifyWait(0, 0, &can_id, portMAX_DELAY);
-        if (digitalRead(canal_b) == LOW)
+        if (digitalRead(PIN::EncoderB_canalB) == LOW)
         {
             encoder_count++;
         }

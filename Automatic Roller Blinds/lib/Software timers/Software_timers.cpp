@@ -12,10 +12,15 @@ namespace SOFTWARE_TIMERS
     TimerHandle_t EmergencyMode_timer = NULL;
     TimerHandle_t OTAMode_timer = NULL;
     TimerHandle_t EncoderListener_timer = NULL;
+    TimerHandle_t Manual_solo_motor_switch_timer = NULL;
 
     bool AfterManualMode_timer_active = false;
 
-    void software_timers_init(uint32_t AfterManualMode_timer_ms_period, uint32_t EmergencyMode_timer_ms_period, uint64_t OTAMode_timer_ms_period, uint32_t EncoderListener_timer_ms_period)
+    void software_timers_init(uint32_t AfterManualMode_timer_ms_period, 
+        uint32_t EmergencyMode_timer_ms_period, 
+        uint64_t OTAMode_timer_ms_period, 
+        uint32_t EncoderListener_timer_ms_period, 
+        uint32_t Manual_solo_motor_switch_timer_ms_period)
     {
         // Create software timers here, initial those at void setup() in main.ino
         
@@ -91,6 +96,25 @@ namespace SOFTWARE_TIMERS
             Serial.println("EncoderListener Timer created successfully");
         }
 
+
+        // Timer to handle switching motor operation to solo mode after certain time of operation in manual mode, indicating a problem with the other motor
+        Manual_solo_motor_switch_timer = xTimerCreate(
+            "ManualSoloMotorSwitchTimer",                                                  // Timer name
+            pdMS_TO_TICKS(Manual_solo_motor_switch_timer_ms_period),                       // Timer period in ticks
+            pdFALSE,                                                                       // Auto-reload (pdFALSE = one-shot)
+            (void*)4,                                                                      // Timer ID
+            Manual_solo_motor_switch_timer_callback                                        // Callback function
+        );
+
+        if (Manual_solo_motor_switch_timer == NULL)
+        {
+            Serial.println("ManualSoloMotorSwitch Timer could not be created");
+        }
+        else
+        {
+            Serial.println("ManualSoloMotorSwitch Timer created successfully");
+        }
+
     }
 
     /*
@@ -144,5 +168,19 @@ namespace SOFTWARE_TIMERS
     void EncoderListener_timer_callback(TimerHandle_t xTimer)
     {
         Serial.println("ERROR! Motor Encoders not responding or there is a problem with motors! shutting down automatic motor operation!");
+    }
+
+    /*
+    Timer used for switching motor operation to solo mode after certain time of operation in manual mode, 
+    It resets the manual switch to 0, which means normal operation with both motors working, if there was a problem with one of the motors in manual mode and it was switched to solo mode. 
+    To change the period, re-initialize the timer with different period value in software_timers_init().
+    */
+    void Manual_solo_motor_switch_timer_callback(TimerHandle_t xTimer)
+    {
+        if (GLOBALS::MODE == 0)
+        {
+            GLOBALS::manual_switch = 0; // switch back to normal mode with both motors working
+            Serial.println("Changing switch counter to 0!");
+        }           
     }
 }

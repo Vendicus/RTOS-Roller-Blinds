@@ -24,9 +24,9 @@ namespace PIN{
 
     // Encoders pins
     extern const uint8_t EncoderA_canalA;   // GPIO pin for Encoder A canal A
-    //extern const uint8_t EncoderA_canalB;   // GPIO pin for Encoder A canal B
+    extern const uint8_t EncoderA_canalB;   // GPIO pin for Encoder A canal B
     extern const uint8_t EncoderB_canalA;   // GPIO pin for Encoder B canal A
-    //extern const uint8_t EncoderB_canalB;   // GPIO pin for Encoder B canal B
+    extern const uint8_t EncoderB_canalB;   // GPIO pin for Encoder B canal B
 
     // pin used for backup monitor
     extern const uint8_t Voltage_monitor_pin;   // GPIO pin used as signal for power lose  

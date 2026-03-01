@@ -31,12 +31,15 @@ namespace SOFTWARE_TIMERS
     */
     extern TimerHandle_t EncoderListener_timer;
 
+    extern TimerHandle_t Manual_solo_motor_switch_timer; // timer used for switching motor operation to solo mode after certain time of operation in manual mode, indicating a problem with the other motor, will be launched from main task when needed
+
     extern bool led_state; // led state var for emergency mode blinking, used in EmergencyMode_timer_callback
     extern bool AfterManualMode_timer_active; // flag indicating if AfterManualMode timer is active
     
-    void software_timers_init(uint32_t AfterManualMode_timer_ms_period = 5000, uint32_t EmergencyMode_timer_ms_period = 500, uint64_t OTAMode_timer_ms_period = 80000, uint32_t EncoderListener_timer_ms_period = 60000);
+    void software_timers_init(uint32_t AfterManualMode_timer_ms_period = 5000, uint32_t EmergencyMode_timer_ms_period = 500, uint64_t OTAMode_timer_ms_period = 80000, uint32_t EncoderListener_timer_ms_period = 60000, uint32_t Manual_solo_motor_switch_timer_ms_period = 2000);
     void AfterManualMode_timer_callback(TimerHandle_t xTimer);
     void EmergencyMode_timer_callback(TimerHandle_t xTimer);
     void OTAMode_timer_callback(TimerHandle_t xTimer);
     void EncoderListener_timer_callback(TimerHandle_t xTimer);
+    void Manual_solo_motor_switch_timer_callback(TimerHandle_t xTimer);
 }
