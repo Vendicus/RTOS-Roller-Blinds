@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <Preferences.h>
+#include <ESP32Encoder.h>
 
 extern Preferences flash;
 
@@ -27,8 +28,8 @@ class EncoderA
     static int64_t get_down_limit();
 
     //TASKS
-    static TaskHandle_t task_encoderA_handle;
-    static void task_encoderA_reader(void* parameter);
+    //static TaskHandle_t task_encoderA_handle;
+    //static void task_encoderA_reader(void* parameter);
 
   private:
     //encoder count variable

@@ -11,7 +11,6 @@
 #include <pins.h>
 #include <EncoderA_class.h>
 #include <EncoderB_class.h>
-#include <ISR_encoders.h>
 #include <SSR_Queue.h>
 #include <backup_task.h>
 #include <ISR_backup_mode.h>
@@ -38,7 +37,6 @@ void setup()
   
   // ISRS and HW TIMERS INITIALIZATION
   ISR_BUTTONS::attach_button_ISRs(PIN::Button_up, PIN::Button_down, PIN::Button_Em_stop); 
-  ISR_ENCODERS::attach_encoders_ISRs(PIN::EncoderA_canalA, PIN::EncoderB_canalA);
   ISR_BACKUP::attach_backup_isr(PIN::Voltage_monitor_pin);
   //HW_TIMER::attach_timers(80);
 

@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <Preferences.h>
 #include <pins.h>
+#include <ESP32Encoder.h>
 
 namespace ENCODER {
 
@@ -10,7 +11,9 @@ int64_t EncoderB::min_count {0};
 int64_t EncoderB::encoder_count {0};
 uint32_t EncoderB::can_id {0};
 
-TaskHandle_t EncoderB::task_encoderB_handle = NULL;
+//TaskHandle_t EncoderB::task_encoderB_handle = NULL;
+
+ESP32Encoder encoderB;
 
 void EncoderB::init()
 {
@@ -18,12 +21,17 @@ void EncoderB::init()
     max_count = 200;
     min_count = -10;
 
+    ESP32Encoder::useInternalWeakPullResistors = puType::up;                    // enable internal pull-up resistors for encoder pins
+    encoderB.attachFullQuad(PIN::EncoderB_canalA, PIN::EncoderB_canalB);
+    encoderB.setFilter(1023);
+
     // read last values from flash
-    encoder_count = flash.getInt("count_B", 0);
+    encoderB.setCount(flash.getInt("count_B", 0));
     max_count = flash.getInt("maxB", 200);
     Serial.printf("MAX value read: %d\n", max_count);
-    Serial.printf("ENCODER B val read :%d\n", encoder_count);
+    Serial.printf("ENCODER B val read :%d\n", encoderB.getCount());
 
+    /*
     xTaskCreate(
         EncoderB::task_encoderB_reader,                 // Task function
         "EncoderBReader",                               // Name of the task
@@ -32,6 +40,7 @@ void EncoderB::init()
         2,                                              // Priority of the task
         &ENCODER::EncoderB::task_encoderB_handle        // Task handle
     );
+    */
 }
 
 /**
@@ -39,7 +48,7 @@ void EncoderB::init()
  */
 int64_t EncoderB::get_count()
 {
-    return encoder_count;
+    return encoderB.getCount();
 }
 
 /**
@@ -47,7 +56,7 @@ int64_t EncoderB::get_count()
  */
 void EncoderB::reset_count()
 {
-    encoder_count = 0;
+    encoderB.setCount(0);
     if (ENCODER::EncoderB::get_count() != flash.getInt("count_B",false))
     {
         flash.putInt("count_B", ENCODER::EncoderB::get_count()); // save encoder count to flash
@@ -98,7 +107,7 @@ void EncoderB::set_down_limit(int64_t initial_count)
  */
 bool EncoderB::at_up_limit()
 {   
-    return encoder_count >= max_count;
+    return encoderB.getCount() >= max_count;
 }
 
 /**
@@ -106,12 +115,13 @@ bool EncoderB::at_up_limit()
  */
 bool EncoderB::at_down_limit()
 {
-    return encoder_count <= min_count;
+    return encoderB.getCount() <= min_count;
 }
 
 /**
  * @brief Task function to read the encoder signals and update the encoder count.
  */
+/*
 void EncoderB::task_encoderB_reader(void* parameter)
 {
     while (1)
@@ -127,4 +137,5 @@ void EncoderB::task_encoderB_reader(void* parameter)
         }
     }
 }
+*/
 }

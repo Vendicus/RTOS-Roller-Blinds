@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <Preferences.h>
 #include <pins.h>
+#include <ESP32Encoder.h>
 
 Preferences flash;
 
@@ -11,23 +12,30 @@ int64_t EncoderA::max_count {0};
 int64_t EncoderA::min_count {0};
 int64_t EncoderA::encoder_count {0};
 uint32_t EncoderA::can_id {0};
+ESP32Encoder encoderA;
 
-TaskHandle_t EncoderA::task_encoderA_handle = NULL;
+//TaskHandle_t EncoderA::task_encoderA_handle = NULL;
 
 void EncoderA::init()
 {
+    ESP32Encoder::useInternalWeakPullResistors = puType::up;                    // enable internal pull-up resistors for encoder pins
+    encoderA.attachFullQuad(PIN::EncoderA_canalA, PIN::EncoderA_canalB);
+    encoderA.setFilter(1023);
+    
     encoder_count = 0;
     max_count = 200;
     min_count = -10;
 
     // read last values from flash
-    encoder_count = flash.getInt("count_A", 0);
+    //encoder_count = flash.getInt("count_A", 0);
+    encoderA.setCount(flash.getInt("count_A", 0));
     max_count = flash.getInt("max", 200);
     Serial.printf("MAX value read: %d\n", max_count);
-    Serial.printf("ENCODER A val read :%d\n", encoder_count);
+    Serial.printf("ENCODER A val read :%d\n", encoderA.getCount());
 
     //canal_b = encoderA_canal_b;
 
+    /*
     xTaskCreate(
         EncoderA::task_encoderA_reader,                 // Task function
         "EncoderAReader",                               // Name of the task
@@ -36,6 +44,7 @@ void EncoderA::init()
         2,                                              // Priority of the task
         &ENCODER::EncoderA::task_encoderA_handle        // Task handle
     );
+    */
 }
 
 /**
@@ -43,7 +52,7 @@ void EncoderA::init()
  */
 int64_t EncoderA::get_count()
 {
-    return encoder_count;
+    return encoderA.getCount();
 }
 
 /**
@@ -51,7 +60,7 @@ int64_t EncoderA::get_count()
  */
 void EncoderA::reset_count()
 {
-    encoder_count = 0;
+    encoderA.setCount(0);
     if (ENCODER::EncoderA::get_count() != flash.getInt("count_A",false))
     {
         flash.putInt("count_A", ENCODER::EncoderA::get_count()); // save encoder count to flash
@@ -102,7 +111,7 @@ void EncoderA::set_down_limit(int64_t initial_count)
  */
 bool EncoderA::at_up_limit()
 {   
-    return encoder_count >= max_count;
+    return encoderA.getCount() >= max_count;
 }
 
 /**
@@ -110,12 +119,13 @@ bool EncoderA::at_up_limit()
  */
 bool EncoderA::at_down_limit()
 {
-    return encoder_count <= min_count;
+    return encoderA.getCount() <= min_count;
 }
 
 /**
  * @brief Task function to read the encoder signals and update the encoder count.
  */
+/*
 void EncoderA::task_encoderA_reader(void* parameter)
 {
     while (1)
@@ -131,4 +141,5 @@ void EncoderA::task_encoderA_reader(void* parameter)
         }
     }
 }
+*/
 }

@@ -27,8 +27,8 @@ class EncoderB
     static int64_t get_down_limit();
 
     //TASKS
-    static TaskHandle_t task_encoderB_handle;
-    static void task_encoderB_reader(void* parameter);
+   // static TaskHandle_t task_encoderB_handle;
+   // static void task_encoderB_reader(void* parameter);
 
   private:
     //encoder count variable
