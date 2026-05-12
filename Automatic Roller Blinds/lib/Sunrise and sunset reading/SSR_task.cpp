@@ -16,43 +16,36 @@ namespace SSR
     String SSR::payload {""};
     uint8_t SSR::Mode {0}; 
     uint32_t SSR::signal {0};
-    tm SSR::t {0};
+    HTTPClient SSR::http {};
     
-    time_t SSR::sun_string_to_time(const String &s)
+    JsonDocument SSR::api_documentation {};
+    tm SSR::t {0};
+
+    time_t SSR::iso_string_to_time(const char* s)
     {
-        //format YYYY-MM-DD HH:MM:SS
-        sscanf(s.c_str(), "%d-%d-%d %d:%d:%d",
-        &t.tm_year, 
-        &t.tm_mon,
-        &t.tm_mday,
-        &t.tm_hour,
-        &t.tm_min,
-        &t.tm_sec);
-
-        t.tm_year -= 1900;
-        t.tm_mon -= 1;
-
-        time_t out = mktime(&t);
-        return out;
-    }
-
-    String SSR::iso_string {""};
-
-    time_t SSR::iso_string_to_time(const String &s)
-    {
-        iso_string = s.c_str();
-        iso_string.replace("T"," ");
-        iso_string = iso_string.substring(0, 19);
-        
-        time_t out = SSR::sun_string_to_time(iso_string);
-        return out;
+        if (s == nullptr) return 0;
+        //format YYYY-MM-DDTHH:MM:SS
+        if (sscanf(s, "%d-%d-%dT%d:%d:%d", 
+                &t.tm_year, &t.tm_mon, &t.tm_mday, 
+                &t.tm_hour, &t.tm_min, &t.tm_sec) == 6) 
+        {
+            t.tm_year -= 1900; // 1900 year
+            t.tm_mon -= 1;     // months since January (0-11)
+            t.tm_isdst = -1;   // autodetect daylight saving time
+            
+            return mktime(&t); 
+        }
+        return 0;
     }
 
     time_t SSR::rtc_time {0};
     timeval SSR::current_time {0};
+    DeserializationError SSR::error {};
 
     bool SSR::set_RTC_time()
     {
+        api_documentation.clear();
+
         if (WiFi.status() != WL_CONNECTED)
         {
             Serial.println("WiFi connection failed, cannot set RTC time.");
@@ -61,24 +54,28 @@ namespace SSR
         } 
 
         // actual time download 
-        HTTPClient http;
         http.begin("https://aisenseapi.com/services/v1/datetime");
-        int httpCode = http.GET();
-        if(httpCode == 200) // code - OK
-        {
-            payload = http.getString();
+        if(http.GET() == 200) // code - OK
+        {       
+            error = deserializeJson(api_documentation, http.getStream());
 
-            DynamicJsonDocument doc(1024);
-            deserializeJson(doc, payload);
-            
-            String rtc_string = doc["datetime"];
+            if (error)
+            {
+                Serial.print("Error during JSON deserialization: ");
+                Serial.println(error.c_str());
+                return false;
+            }
+            else
+            {
+                Serial.println("JSON deserialization successful.");
+                Serial.print("Date time set up: ");
+                Serial.println(static_cast<const char*>(api_documentation["datetime"]));
 
-            Serial.print("Date time set up: ");
-            Serial.println(rtc_string);
+                rtc_time = iso_string_to_time(api_documentation["datetime"].as<const char*>());
+                current_time = { .tv_sec = rtc_time };
+                settimeofday(&current_time, NULL);
+            }
 
-            rtc_time = iso_string_to_time(rtc_string);
-            current_time = { .tv_sec = rtc_time };
-            settimeofday(&current_time, NULL);
         }
         else
         {
@@ -95,11 +92,11 @@ namespace SSR
     void SSR::get_RTC_time()
     {
         now = time(NULL);
-        if (now != (time_t)(-1))
+        if (now != -1)
         {
             Serial.printf("The current time is %s(%jd seconds since the Epoch)\n",
                asctime(gmtime(&now)), // time as date : YYYY-MM-DD HH:MM:SS
-               (intmax_t)now);  // seconds from 1970
+               now);  // seconds from 1970
         }
         else
         {
@@ -111,6 +108,7 @@ namespace SSR
 
     bool SSR::sunrise_sunset_set_time()
     {
+        api_documentation.clear();
 
         if (WiFi.status() != WL_CONNECTED)
         {
@@ -119,33 +117,34 @@ namespace SSR
             return false;
         }
 
-        HTTPClient http;
         http.begin("https://api.sunrise-sunset.org/json?lat=50.029468&lng=22.013083&formatted=0");
         // lattitude of your area -> lat= 
         // longtitude of your area -> lng= 
 
-        int httpCode = http.GET();
-        if(httpCode == 200) // code -> OK
+        if(http.GET() == 200) // code -> OK
         {
-            payload = http.getString();
-
-            DynamicJsonDocument doc(2048);
-            deserializeJson(doc, payload);
-
-            String sunrise = doc["results"]["sunrise"];
-            String sunset = doc["results"]["sunset"];
-
-            suntime.sunrise = iso_string_to_time(sunrise);
-            suntime.sunset = iso_string_to_time(sunset);
-            
-            Serial.printf("Sunrise for today: %s, ",
-                asctime(gmtime(&suntime.sunrise)));
-            Serial.printf("Sunset : %s \n",
-                asctime(gmtime(&suntime.sunset)));
+            error = deserializeJson(api_documentation, http.getStream());
+            if (error)
+            {
+                Serial.print("Error during JSON deserialization: ");
+                Serial.println(error.c_str());
+                return false;
+            }
+            else
+            {
+                Serial.println("JSON deserialization successful.");
+                suntime.sunrise = iso_string_to_time(api_documentation["results"]["sunrise"].as<const char*>());
+                suntime.sunset = iso_string_to_time(api_documentation["results"]["sunset"].as<const char*>());
+                
+                Serial.printf("Sunrise for today: %s, ",
+                    asctime(gmtime(&suntime.sunrise)));
+                Serial.printf("Sunset : %s \n",
+                    asctime(gmtime(&suntime.sunset)));
+            }       
         }
         else
         {
-            Serial.println("There was error during sunrise and sunset request.");
+            Serial.println("There was error during sunrise and sunset https request.");
             return false;
         }
         http.end();
@@ -168,9 +167,9 @@ namespace SSR
             diff_sunrise = suntime.sunrise - now; 
             diff_sunset = suntime.sunset - now;
             
-            Serial.printf("Time (sec) for next sunrise: %s, for sunset %s",
-                (String)(diff_sunrise),
-                (String)(diff_sunset)
+            Serial.printf("Time (sec) for next sunrise: %ld, for sunset %ld",
+               diff_sunrise,
+                diff_sunset
             );
             Serial.println();
 
@@ -178,10 +177,10 @@ namespace SSR
 
             if (diff_sunrise > 0)
             {
-                Serial.printf("Setting hardware timer for sunrise in %s seconds.\n", (String)(diff_sunrise));
-                if (diff_sunrise > 1800) // 30 min earlier launch
+                Serial.printf("Setting hardware timer for sunrise in %ld seconds.\n", diff_sunrise);
+                if (diff_sunrise > 900) // 15 min earlier launch
                 {
-                    GLOBALS::TIME_SET_FOR_TIMER = diff_sunrise - 1800;
+                    GLOBALS::TIME_SET_FOR_TIMER = diff_sunrise - 900;
                     //HW_TIMER::hw_timer_2_activate((time_t)(diff_sunrise - 1800));
                 }
                 else
@@ -193,7 +192,7 @@ namespace SSR
             }
             else if (diff_sunset > -720)
             {
-                Serial.printf("Setting hardware timer for sunset in %s seconds.\n", (String)(diff_sunset + 720));
+                Serial.printf("Setting hardware timer for sunset in %ld seconds.\n", diff_sunset + 720);
                 GLOBALS::TIME_SET_FOR_TIMER = diff_sunset + 720;
                 //HW_TIMER::hw_timer_2_activate((time_t)(diff_sunset + 720)); // set launch later for 720 seconds
                 Mode = 2; // sunset set activate
@@ -224,6 +223,24 @@ namespace SSR
         }   
     }
 
+    bool SSR::set_hw_debug_timer()
+    {
+        GLOBALS::TIME_SET_FOR_TIMER = 180; // set timer for 3 min for debugging purposes
+        switch (Mode)
+        {
+        case 0:
+            Mode = 1;
+            break;
+        case 1:
+            Mode = 2;
+            break;
+        case 2:
+            Mode = 0;
+            break;
+        }
+        return true;
+    }
+
     // TASKS
 
     void SSR::SSR_task(void* parameters)
@@ -235,7 +252,7 @@ namespace SSR
             vTaskDelay(pdMS_TO_TICKS(5000));
         }
         get_RTC_time();
-        while(!set_hw_timer())
+        while(!set_hw_timer()) //shw
         {
             Serial.println("Hardware timer NOT set, next try for 5 sec.");
             vTaskDelay(pdMS_TO_TICKS(5000));

@@ -3,6 +3,7 @@
 #include <time.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <ArduinoJson.h>
 
 
 namespace SSR {
@@ -17,10 +18,10 @@ namespace SSR {
 
             static bool set_RTC_time();
             static void get_RTC_time();
-            static time_t sun_string_to_time(const String &s);
-            static time_t iso_string_to_time(const String &s);
+            static time_t iso_string_to_time(const char* s);
             static bool sunrise_sunset_set_time();
             static bool set_hw_timer();
+            static bool set_hw_debug_timer();
         
             // TASKS
             static TaskHandle_t ssr_task_handle;
@@ -28,8 +29,11 @@ namespace SSR {
             static void SSR_task_init(unsigned portBASE_TYPE stack_size, UBaseType_t priority);
 
         private:
+            // global vars used with sunrise and sunset time reading and processing
             static HTTPClient http;
             static String payload;
+            static JsonDocument api_documentation;
+            static DeserializationError error;
         
             // local methods vars
             static uint8_t Mode;

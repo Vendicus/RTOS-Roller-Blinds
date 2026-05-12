@@ -297,6 +297,7 @@ namespace MAIN_TASK
                 local_mode = 0;
                 counter_enc = 0;
                 digitalWrite(PIN::Relay_pin, LOW); // turn off relay
+                vTaskDelay(pdMS_TO_TICKS(100)); // little delay to allow relay to turn off before next operations
             }
              
             // --------------------------------------------------> SERIAL OUTPUT FOR DEBUGGING <-----------------------------------------------
